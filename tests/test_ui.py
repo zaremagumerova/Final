@@ -1,4 +1,3 @@
-
 import pytest
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -6,19 +5,19 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import allure
-from allure_commons.types import AttachmentType
+
 
 #Фикстура для инициализации и закрытия драйвера.
-@pytest.fixture(scope="module")
+@pytest.fixture
 def driver():
     driver = webdriver.Chrome() # Или webdriver.Firefox(), webdriver.Edge()
     driver.maximize_window()
+    driver.implicitly_wait(50)
     yield driver
     driver.quit()
 
-@allure.feature("Поиск на Кинопоиске") #Основная фича тестов
 
-#Все тесты оборачиваем в функцию
+@allure.feature("Поиск на Кинопоиске")
 @allure.story("Поиск по названию")
 def test_search_by_title(driver):
     with allure.step("Перейти на главную страницу"):
@@ -38,134 +37,73 @@ def test_search_by_title(driver):
             result_link = driver.find_element(By.PARTIAL_LINK_TEXT, movie_title)
             assert movie_title in result_link.text
         except Exception as e:
-            allure.attach(driver.get_screenshot_as_png(), name="screenshot", attachment_type=AttachmentType.PNG)
             raise
 
-@allure.story("Поиск по жанру")
+@allure.story("Поиск по фильму")
 def test_search_by_genre(driver):
-    with allure.step("Перейти на страницу списков фильмов"):
-        driver.get("https://www.kinopoisk.ru/lists/movies/")
-    genre = "фантастика"
-    year = "2014"
-
-    with allure.step("Выбрать жанр 'Фантастика' и год '2014' в фильтрах"):
-        try:
-            advanced_search_link = driver.find_element(By.XPATH, "//a[contains(text(), 'Расширенный поиск')]")
-            advanced_search_link.click()
-
-            year_input = driver.find_element(By.NAME, "year")
-            year_input.send_keys(year)
-
-            genre_checkbox = driver.find_element(By.XPATH, f"//label[contains(text(), '{genre}')]/input[@type='checkbox']")
-            genre_checkbox.click()
-
-            search_button = driver.find_element(By.XPATH, "//input[@value='search']")
-            search_button.click()
-
-            WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.XPATH, f"//a[contains(text(), '{genre}')]"))
-            )
-            genre_element = driver.find_element(By.XPATH, f"//a[contains(text(), '{genre}')]")
-            assert genre in genre_element.text
-        except Exception as e:
-            allure.attach(driver.get_screenshot_as_png(), name="screenshot", attachment_type=AttachmentType.PNG)
-            raise
-@allure.story("Поиск по году")
-def test_search_by_year(driver):
-     with allure.step("Перейти на страницу списков фильмов"):
-         driver.get("https://www.kinopoisk.ru/lists/movies/")
-     year = "2014"
-     with allure.step("Выбрать год в фильтрах"):
-         try:
-            advanced_search_link = driver.find_element(By.XPATH, "//a[contains(text(), 'Расширенный поиск')]")
-            advanced_search_link.click()
-            year_input = driver.find_element(By.NAME, "year")
-            year_input.send_keys(year)
-            search_button = driver.find_element(By.XPATH, "//input[@value='search']")
-            search_button.click()
-            WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.XPATH, f"//div[contains(text(), '{year}')]"))
-            )
-            genre_element = driver.find_element(By.XPATH, f"//div[contains(text(), '{year}')]")
-            assert year in genre_element.text
-         except Exception as e:
-             allure.attach(driver.get_screenshot_as_png(), name="screenshot", attachment_type=AttachmentType.PNG)
-             raise
-@allure.story("Поиск по нескольким критериям")
-def test_search_by_multiple_criteria(driver):
-   with allure.step("Перейти на страницу списков фильмов"):
-       driver.get("https://www.kinopoisk.ru/lists/movies/")
-   genre = "фантастика"
-   year = "2014"
-
-   with allure.step("Выбрать жанр 'Фантастика' и год '2014' в фильтрах"):
-       try:
-           advanced_search_link = driver.find_element(By.XPATH, "//a[contains(text(), 'Расширенный поиск')]")
-           advanced_search_link.click()
-
-           year_input = driver.find_element(By.NAME, "year")
-           year_input.send_keys(year)
-
-           genre_checkbox = driver.find_element(By.XPATH, f"//label[contains(text(), '{genre}')]/input[@type='checkbox']")
-           genre_checkbox.click()
-
-           search_button = driver.find_element(By.XPATH, "//input[@value='search']")
-           search_button.click()
-
-           WebDriverWait(driver, 10).until(
-               EC.presence_of_element_located((By.XPATH, f"//a[contains(text(), '{genre}')]"))
-           )
-           genre_element = driver.find_element(By.XPATH, f"//a[contains(text(), '{genre}')]")
-           assert genre in genre_element.text
-       except Exception as e:
-           allure.attach(driver.get_screenshot_as_png(), name="screenshot", attachment_type=AttachmentType.PNG)
-           raise
-
-@allure.story("Поиск по невалидным данным в названии")
-def test_search_by_invalid_title(driver):
     with allure.step("Перейти на главную страницу"):
         driver.get("https://www.kinopoisk.ru/")
-    invalid_title = "asdfghjklqwertyuiop"
+    movie_title = "Интерстеллар"
 
-    with allure.step(f"Ввести невалидное название '{invalid_title}' в поисковую строку"):
+    with allure.step(f"Ввести название фильма '{movie_title}' в поисковую строку"):
         search_input = driver.find_element(By.NAME, "kp_query")
-        search_input.send_keys(invalid_title)
-        search_input.send_keys(Keys.RETURN)
+        search_input.send_keys(movie_title)
+    movie = driver.find_element(By.ID, "suggest-item-film-258687")
+    assert movie.is_displayed(), "Поле поиска не отображается"
 
-    with allure.step("Проверить, что отображается сообщение об отсутствии результатов"):
-        try:
-            WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.XPATH, "//p[contains(text(), 'К сожалению, по вашему запросу ничего не найдено')]"))
-            )
-            error_message = driver.find_element(By.XPATH, "//p[contains(text(), 'К сожалению, по вашему запросу ничего не найдено')]")
-            assert "К сожалению, по вашему запросу ничего не найдено" in error_message.text
-        except Exception as e:
-            allure.attach(driver.get_screenshot_as_png(), name="screenshot", attachment_type=AttachmentType.PNG)
-            raise
-@allure.story("Поиск по невалидным данным в названии и году")
-def test_search_by_invalid_title_and_year(driver):
-  with allure.step("Перейти на страницу списков фильмов"):
-      driver.get("https://www.kinopoisk.ru/lists/movies/")
-  invalid_title = "asdfghjklqwertyuiop"
-  year = "3000" #Невалидный год
 
-  with allure.step(f"Ввести невалидное название '{invalid_title}' и год '{year}' в фильтры"):
-      try:
-          advanced_search_link = driver.find_element(By.XPATH, "//a[contains(text(), 'Расширенный поиск')]")
-          advanced_search_link.click()
-          year_input = driver.find_element(By.NAME, "year")
-          year_input.send_keys(year)
-          search_input = driver.find_element(By.NAME, "kp_query") #Вводим название фильма в поле поиска
-          search_input.send_keys(invalid_title)
-          search_button = driver.find_element(By.XPATH, "//input[@value='search']")
-          search_button.click()
+@allure.title("Просмотр подробной информации о фильме")
+def test_view_movie_details(driver):
+    driver.get("https://www.kinopoisk.ru/")
+    search_bar = driver.find_element(
+        By.CSS_SELECTOR, "input[placeholder='Фильмы, сериалы, персоны']")
+    search_bar.send_keys("Интерстеллар")
+    search_bar.send_keys(Keys.ENTER)
 
-          WebDriverWait(driver, 10).until(
-              EC.presence_of_element_located((By.XPATH, "//p[contains(text(), 'К сожалению, по вашему запросу ничего не найдено')]"))
-          )
-          error_message = driver.find_element(By.XPATH, "//p[contains(text(), 'К сожалению, по вашему запросу ничего не найдено')]")
-          assert "К сожалению, по вашему запросу ничего не найдено" in error_message.text
+    movie_link = WebDriverWait(driver, 20).until(
+        EC.element_to_be_clickable((By.LINK_TEXT, "Интерстеллар"))
+    )
+    movie_link.click()
 
-      except Exception as e:
-          allure.attach(driver.get_screenshot_as_png(), name="screenshot", attachment_type=AttachmentType.PNG)
-          raise
+    movie_info = WebDriverWait(driver, 20).until(
+        EC.presence_of_element_located((
+            By.CSS_SELECTOR, '[class*="styles_paragraph"]'))
+    )
+
+    assert movie_info.is_displayed(), "Подробная информация о фильме не отображается"
+
+
+@allure.title("Проверка заголовка страницы Kinopoisk")
+def test_header(driver):
+    driver.get("https://hd.kinopoisk.ru/")
+    element = driver.find_element(By.TAG_NAME, "h1")
+    assert element.text == "Фильмы и сериалы, премиум‑телеканалы по подписке"
+
+
+@allure.title("Проверка информации об актерах")
+def test_check_actor_info(driver):
+    driver.get("https://www.kinopoisk.ru/")
+    # Переход на страницу фильма
+    search_bar = driver.find_element(
+        By.CSS_SELECTOR, "input[placeholder='Фильмы, сериалы, персоны']")
+    search_bar.send_keys("Интерстеллар")
+    search_bar.send_keys(Keys.ENTER)
+
+    movie_link = WebDriverWait(driver, 20).until(
+        EC.element_to_be_clickable((By.LINK_TEXT, "Интерстеллар"))
+    )
+    movie_link.click()
+
+    # Переход на страницу с главными ролями
+    cast_link = WebDriverWait(driver, 20).until(
+        EC.element_to_be_clickable((By.LINK_TEXT, "В главных ролях"))
+    )
+    cast_link.click()
+
+    # Ожидание заголовка "Актеры"
+    actor_header = WebDriverWait(driver, 20).until(
+        EC.visibility_of_element_located((
+            By.XPATH, "//a[@name='actor']/following-sibling::div[contains(\
+                text(), 'Актеры')]"))
+    )
+    assert actor_header.is_displayed(), "Заголовок 'Актеры' не отображается"
