@@ -1,0 +1,9 @@
+{
+  "base_url_ui": "https://www.kinopoisk.ru",
+  "base_url_api": "https://api.kinopoisk.dev/v1.4/", 
+  "api_token": {"X-API-KEY": "VFH6RN7-BZWMJSH-GVDHE7R-5ET1PFQ"},
+  "auth_credentials": {
+    "username": "valeevazare@yandex.ru",
+    "password": "Vzs849475@"
+  }
+}
